@@ -98,3 +98,27 @@ class LoginActivity(models.Model):
 
     def __str__(self):
         return f"{self.user.email} logged in from {self.ip_address}"
+    
+    
+class EmailOTP(models.Model):
+    """
+    Stores OTPs sent to users for email verification or password reset.
+    - OTP code
+    - Associated user
+    - Creation timestamp
+    - Expiration timestamp
+    """
+    email = models.EmailField()
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    
+    def is_valid(self):
+        return (not self.is_used) and (timezone.now() < self.expires_at)
+    
+    def __str__(self):
+        return f"OTP for {self.email}: {self.otp}"
+    
+    class Meta:
+        ordering = ['-created_at']
