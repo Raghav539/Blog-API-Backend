@@ -1,9 +1,9 @@
 from django.db import models
+import uuid
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.utils import timezone
 
 from .managers import UserManager  
-
 
 class User(AbstractBaseUser, PermissionsMixin):
     """
@@ -11,9 +11,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     - Replaces username with email
     - Supports extra fields (phone, profile image, roles)
     """
-
     # Remove default username field
     username = None
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
 
     # Core fields
     email = models.EmailField(
@@ -76,8 +76,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         if not self.otp_created_at:
             return False
         return timezone.now() < (self.otp_created_at + timezone.timedelta(minutes=10))
-    
-    
+
 class LoginActivity(models.Model):
     """
     Stores login activity details:
@@ -86,7 +85,6 @@ class LoginActivity(models.Model):
     - Device/User-Agent
     - Timestamp
     """
-
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="login_logs")
 
     ip_address = models.GenericIPAddressField()
