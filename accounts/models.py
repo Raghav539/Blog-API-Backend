@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.utils import timezone
 
-from .managers import UserManager  # Fixed: space before "managers"
+from .managers import UserManager  
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -76,3 +76,27 @@ class User(AbstractBaseUser, PermissionsMixin):
         if not self.otp_created_at:
             return False
         return timezone.now() < (self.otp_created_at + timezone.timedelta(minutes=10))
+    
+    
+class LoginActivity(models.Model):
+    """
+    Stores login activity details:
+    - IP address
+    - Location (city, region, country)
+    - Device/User-Agent
+    - Timestamp
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="login_logs")
+
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.TextField(blank=True, null=True)
+
+    country = models.CharField(max_length=100, blank=True, null=True)
+    region = models.CharField(max_length=100, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+
+    login_time = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.email} logged in from {self.ip_address}"
