@@ -43,3 +43,34 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+#GET USER DEVICE / BROWSER INFO
+def get_user_agent(request):
+    return request.META.get("HTTP_USER_AGENT", "Unknown Device")
+
+# GET LOCATION USING IP
+def get_location_from_ip(ip):
+    try:
+        url = f"https://ipapi.co/{ip}/json/"
+        data = requests.get(url,timeout=3).json()
+        return {
+            "city": data.get("city"),
+            "region": data.get("region"),
+            "country": data.get("country_name"),
+        }
+    except:
+        return {
+            "city": None,
+            "region": None,
+            "country": None,
+        }
+    
+# GENERATE RAW OTP
+def generate_otp():
+    return str(random.randint(100000, 999999))
+
+# SEND OTP EMAIL
+def send_otp_email(email, otp):
+    subject = "Your Login OTP"
+    message = f"Your OTP code is: {otp}"
+    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
