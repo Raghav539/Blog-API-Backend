@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import login, logout
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
 from .models import User, LoginActivity
 from .serializers import (
@@ -69,15 +71,16 @@ class VerifyOTPAPIView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
 
-        # User object returned from serializer
-        user = serializer.validated_data['user']
+        user = serializer.validated_data["user"]
 
-        # Clear OTP after login
+        # OTP Verified → Remove OTP
         user.otp = None
         user.save()
 
-        # Use django session login
-        login(request, user)
+        # -------------------- JWT TOKEN GENERATION --------------------
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
 
         # -------------------- SAVE LOGIN ACTIVITY --------------------
         ip = get_client_ip(request)
@@ -91,10 +94,14 @@ class VerifyOTPAPIView(APIView):
             country=location["country"],
             latitude=location["latitude"],
             longitude=location["longitude"],
-            device=request.META.get("HTTP_USER_AGENT")  # Browser info
+            device=request.META.get("HTTP_USER_AGENT"),
         )
 
-        return Response({"message": "Login successful!"})
+        return Response({
+            "message": "Login successful!",
+            "access": access_token,
+            "refresh": refresh_token
+        })
 
 
 # ----------------------------------------------------------------------------------
@@ -104,8 +111,16 @@ class LogoutAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        logout(request)
-        return Response({"message": "Logged out"})
+        try:
+            refresh_token = request.data.get("refresh")
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+
+            return Response({"message": "Logged out successfully."})
+        
+        except Exception:
+            return Response({"error": "Invalid token."}, status=400)
+        
 
 
 # ----------------------------------------------------------------------------------
