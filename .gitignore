@@ -27,3 +27,4 @@ media/
 # OS files
 .DS_Store
 .env
+.env
