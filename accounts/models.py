@@ -95,6 +95,9 @@ class LoginActivity(models.Model):
     country = models.CharField(max_length=100, blank=True, null=True)
     region = models.CharField(max_length=100, blank=True, null=True)
     city = models.CharField(max_length=100, blank=True, null=True)
+    latitude = models.FloatField(blank=True, null=True)
+    longitude = models.FloatField(blank=True, null=True)
+    device = models.CharField(max_length=255, blank=True, null=True)
 
     login_time = models.DateTimeField(auto_now_add=True)
 
