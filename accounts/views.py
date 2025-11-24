@@ -89,11 +89,11 @@ class VerifyOTPAPIView(APIView):
         LoginActivity.objects.create(
             user=user,
             ip_address=ip,
-            city=location["city"],
-            region=location["region"],
-            country=location["country"],
-            latitude=location["latitude"],
-            longitude=location["longitude"],
+            city=location.get["city"],
+            region=location.get["region"],
+            country=location.get["country"],
+            latitude=location.get["latitude"],
+            longitude=location.get["longitude"],
             device=request.META.get("HTTP_USER_AGENT"),
         )
 

@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, LoginActivity
+from .utils import generate_otp
 
 
 # ----------------------------------------------------------------------------------
@@ -76,6 +78,16 @@ class OTPVerifySerializer(serializers.Serializer):
 
         data['user'] = user
         return data
+    
+    def create_jwt_tokens(self,user):
+        """
+        Create JWT access and refresh tokens for the user.
+        """
+        refresh = RefreshToken.for_user(user)
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
 
 
 # ----------------------------------------------------------------------------------

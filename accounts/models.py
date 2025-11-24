@@ -27,6 +27,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         null=True,
         help_text="User phone number"
     )
+    full_name = models.CharField(max_length=255)
+
 
     # User status flags
     is_active = models.BooleanField(default=True)
