@@ -1,8 +1,10 @@
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework import serializers
-from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+
 from .models import User, LoginActivity
-from .utils import generate_otp
+
+User = get_user_model()
 
 
 # ----------------------------------------------------------------------------------
@@ -13,7 +15,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
     class Meta:
-        model = User   # our custom user model
+        model = User  # our custom user model
         fields = ['email', 'full_name', 'password']
 
     def create(self, validated_data):
@@ -78,8 +80,8 @@ class OTPVerifySerializer(serializers.Serializer):
 
         data['user'] = user
         return data
-    
-    def create_jwt_tokens(self,user):
+
+    def create_jwt_tokens(self, user):
         """
         Create JWT access and refresh tokens for the user.
         """
@@ -97,3 +99,41 @@ class LoginActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = LoginActivity
         fields = '__all__'
+
+
+# Serializer to handle Change Password
+class changePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+
+
+# Serializer to handle Forget Password
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+# Serializer to handle Verify forget Password otp
+
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    new_password = serializers.CharField(write_only=True, min_length=6)
+
+
+# Serializer to handle User Profile read and update
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "email",
+            "full_name",
+            "phone",
+            "profile_image",
+            "role",
+            "is_active",
+            "created_at",
+            "updated_at",
+
+        )
