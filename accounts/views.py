@@ -1,25 +1,29 @@
 import os
+from datetime import timedelta
 
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import LoginActivity
+from .models import LoginActivity, User, EmailOTP
 from .serializers import (
     RegisterSerializer,
     LoginSerializer,
     OTPVerifySerializer,
     LoginActivitySerializer,
     ProfileSerializer,
-    changePasswordSerializer,
+    changePasswordSerializer, ForgotPasswordSerializer, VerifyForgotOTPSerializer, ResetPasswordSerializer
 )
 from .utils import (
     generate_otp,
     send_otp_email,
     get_client_ip,
     get_location_from_ip,
+    send_forgot_password_otp,
+
 )
 
 
@@ -218,3 +222,74 @@ class ChangePasswordView(APIView):
         user.save()
 
         return Response({"message": "Password Updated Successfully"})
+
+
+class ForgotPasswordAPIView(APIView):
+    def post(self, request):
+        serializer = ForgotPasswordSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        email = serializer.validated_data["email"]
+
+        # Check if user exists
+        if not User.objects.filter(email=email).exists():
+            return Response({"error": "User with this email does not exist"}, status=404)
+
+        otp = generate_otp()
+        expires_at = timezone.now() + timedelta(minutes=10)
+
+        # Store OTP
+        EmailOTP.objects.create(
+            email=email,
+            otp=otp,
+            expires_at=expires_at
+        )
+
+        # Send OTP (Forgot Password)
+        send_forgot_password_otp(email, otp)
+
+        return Response({"message": "OTP sent to email!"})
+
+
+class VerifyForgotPasswordOTPAPIView(APIView):
+    def post(self, request):
+        serializer = VerifyForgotOTPSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.error, status=400)
+
+        email = serializer.validated_data["email"]
+        otp = serializer.validated_data["otp"]
+
+        try:
+            otp_obj = EmailOTP.objects.filter(email=email, otp=otp, is_used=False).latest("created_at")
+        except EmailOTP.DoesNotExist:
+            return Response({"error": "OTP expired or already used"}, status=400)
+
+        otp_obj.is_used = True
+        otp_obj.save()
+
+        return Response({"message": "OTP verified successfully!"})
+
+
+class ResetPasswordAPIView(APIView):
+    def post(self, request):
+        serializer = ResetPasswordSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        email = serializer.validated_data["email"]
+        new_password = serializer.validated_data["new_password"]
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response({"message": "Password reset successful!"})

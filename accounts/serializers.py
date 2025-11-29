@@ -114,6 +114,10 @@ class ForgotPasswordSerializer(serializers.Serializer):
 
 
 # Serializer to handle Verify forget Password otp
+class VerifyForgotOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+
 
 class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
