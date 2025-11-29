@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import LoginActivity, User, EmailOTP
+from .permissions import role_required
 from .serializers import (
     RegisterSerializer,
     LoginSerializer,
@@ -293,3 +294,24 @@ class ResetPasswordAPIView(APIView):
         user.save()
 
         return Response({"message": "Password reset successful!"})
+
+
+class UpdateUserRoleAPIView(APIView):
+
+    @role_required(["admin"])
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        role = request.data.get("role")
+
+        if role not in ["admin", "editor", "user"]:
+            return Response({"error": "Invalid role"}, status=400)
+
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
+        user.role = role
+        user.save()
+
+        return Response({"message": "Role Updated Successfully"})

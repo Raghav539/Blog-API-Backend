@@ -10,7 +10,7 @@ from .views import (
     ProfileUpdateAPIView,
     ProfileImageUploadAPIView,
     ProfileImageDeleteAPIView, ChangePasswordView, ForgotPasswordAPIView, VerifyForgotPasswordOTPAPIView,
-    ResetPasswordAPIView,
+    ResetPasswordAPIView, UpdateUserRoleAPIView,
 )
 
 urlpatterns = [
@@ -28,4 +28,5 @@ urlpatterns = [
     path("profile/update/", ProfileUpdateAPIView.as_view(), name="profile-update"),
     path("profile/upload-image/", ProfileImageUploadAPIView.as_view(), name="profile-upload-image"),
     path("profile/delete-image/", ProfileImageDeleteAPIView.as_view(), name="profile-delete-image"),
+    path("admin/update-role/", UpdateUserRoleAPIView.as_view()),
 ]
