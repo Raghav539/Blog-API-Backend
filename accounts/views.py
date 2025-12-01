@@ -297,13 +297,12 @@ class ResetPasswordAPIView(APIView):
 
 
 class UpdateUserRoleAPIView(APIView):
-
-    @role_required(["admin"])
+    @role_required(["admin"])  # only admin can assign roles
     def post(self, request):
         user_id = request.data.get("user_id")
-        role = request.data.get("role")
+        new_role = request.data.get("role")
 
-        if role not in ["admin", "editor", "user"]:
+        if new_role not in ["admin", "editor", "author", "reader"]:
             return Response({"error": "Invalid role"}, status=400)
 
         try:
@@ -311,7 +310,18 @@ class UpdateUserRoleAPIView(APIView):
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
 
-        user.role = role
+        # Update role
+        user.role = new_role
+
+        # Update django permission flags
+        if new_role == "admin":
+            user.is_staff = True
+        else:
+            user.is_staff = False
+
+        # do NOT touch is_superuser
+        # only created from createsuperuser command
+
         user.save()
 
-        return Response({"message": "Role Updated Successfully"})
+        return Response({"message": f"User role updated to {new_role}"})
