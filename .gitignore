@@ -1,5 +1,4 @@
 # ENV files
-.env
 *.env
 
 # Python
@@ -21,10 +20,13 @@ media/
 *.log
 
 # IDE files
-.vscode/
 .idea/
 
 # OS files
 .DS_Store
-.env
-.env
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+.gitignore
+config.bat
+node_modules
